@@ -4,6 +4,7 @@ import { useStore } from "@/lib/store";
 import { isOpen } from "@/lib/engine";
 import { fmtClock } from "@/lib/format";
 import { Icon } from "./ui";
+import { useTheme } from "./theme";
 import Overview from "./Overview";
 import { CampaignDetail, CampaignList } from "./Campaigns";
 import { AlertDetail, AlertsInbox } from "./Alerts";
@@ -20,6 +21,7 @@ export const useNav = () => useContext(NavCtx)!;
 
 export default function Shell() {
   const { state, now } = useStore();
+  const { theme, toggle } = useTheme();
   const [nav, setNav] = useState<Nav>({ view: "overview" });
   const [sim, setSim] = useState<{ open: boolean; campaignId?: string }>({ open: false });
   const go = (n: Nav) => {
@@ -86,6 +88,9 @@ export default function Shell() {
             <div className="top-r">
               <span className="clock" title="Simulated clock: the demo day is fixed at 14:05 when the demo starts">Today {fmtClock(now)} · simulated clock</span>
               <span className="sim-badge">Simulated data</span>
+              <button className="icon-btn theme-btn" onClick={toggle} aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} title={theme === "dark" ? "Light mode" : "Dark mode"}>
+                <Icon name={theme === "dark" ? "sun" : "moon"} size={16} />
+              </button>
               <button className="btn btn-primary" onClick={() => openSim(nav.view === "campaigns" ? nav.campaignId : undefined)}>
                 <Icon name="bolt" size={14} /> Simulate anomaly
               </button>

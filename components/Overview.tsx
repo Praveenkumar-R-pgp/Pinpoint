@@ -2,7 +2,7 @@
 import { useStore } from "@/lib/store";
 import { campaignSnapshot, isOpen, pilotMetrics } from "@/lib/engine";
 import { fmtAgo, fmtMoney, fmtInt } from "@/lib/format";
-import { Card, HealthPill, Icon, PageHeader, SevPill } from "./ui";
+import { CampAvatar, Card, HealthPill, Icon, IconChip, PageHeader, SevPill } from "./ui";
 import { useNav } from "./Shell";
 import { campaignHealth, sortIncidents } from "./helpers";
 
@@ -25,28 +25,28 @@ export default function Overview() {
       />
 
       <div className="kpis">
-        <button className="kpi" onClick={() => go({ view: "alerts" })}>
-          <span className="kpi-l"><span className="sq sq-critical" />Open critical</span>
+        <button className={`kpi ${crit.length ? "kpi-hot-red" : ""}`} onClick={() => go({ view: "alerts" })}>
+          <span className="kpi-top"><IconChip name="warn" tone="red" /><span className="kpi-l">Open critical</span></span>
           <span className="kpi-v">{crit.length}</span>
           <span className="kpi-s">Immediate email on confirmation</span>
         </button>
-        <button className="kpi" onClick={() => go({ view: "alerts" })}>
-          <span className="kpi-l"><span className="sq sq-warning" />Open warnings</span>
+        <button className={`kpi ${warn.length ? "kpi-hot-amber" : ""}`} onClick={() => go({ view: "alerts" })}>
+          <span className="kpi-top"><IconChip name="alerts" tone="amber" /><span className="kpi-l">Open warnings</span></span>
           <span className="kpi-v">{warn.length}</span>
           <span className="kpi-s">Batched into the 6-hour digest</span>
         </button>
         <div className="kpi">
-          <span className="kpi-l"><span className="sq sq-info" />Watch items</span>
+          <span className="kpi-top"><IconChip name="eye" tone="blue" /><span className="kpi-l">Watch items</span></span>
           <span className="kpi-v">{info.length}</span>
           <span className="kpi-s">Dashboard only, no email</span>
         </div>
         <div className="kpi">
-          <span className="kpi-l">Spend at risk today</span>
+          <span className="kpi-top"><IconChip name="dollar" tone="violet" /><span className="kpi-l">Spend at risk today</span></span>
           <span className="kpi-v">{fmtMoney(atRisk)}</span>
           <span className="kpi-s">Estimated from open critical + warning alerts</span>
         </div>
         <button className="kpi" onClick={() => go({ view: "metrics" })}>
-          <span className="kpi-l">Timely resolution rate</span>
+          <span className="kpi-top"><IconChip name="target" tone="green" /><span className="kpi-l">Timely resolution rate</span></span>
           <span className="kpi-v">{pm.timelyRate == null ? "—" : `${Math.round(pm.timelyRate * 100)}%`}</span>
           <span className="kpi-s">North Star · pilot target ≥ 70%</span>
         </button>
@@ -75,11 +75,16 @@ export default function Overview() {
                 return (
                   <tr key={c.id} className="click" onClick={() => go({ view: "campaigns", campaignId: c.id })}>
                     <td>
+                      <div className="cell-camp">
+                      <CampAvatar id={c.id} name={c.name} />
+                      <div>
                       <div className="cell-main">{c.name}</div>
                       <div className="cell-sub">
                         {c.objective}
                         {snap.base.lowConfidence && <span className="tag">Low-confidence baseline</span>}
                         {!c.tracking && <span className="tag">No conversion tracking</span>}
+                      </div>
+                      </div>
                       </div>
                     </td>
                     <td><HealthPill health={h} /></td>
@@ -121,7 +126,7 @@ export default function Overview() {
 
       <div className="flow">
         {["Monitor", "Detect", "Validate", "Prioritise", "Notify", "Act"].map((s, k) => (
-          <div key={s} className="flow-step">
+          <div key={s} className={`flow-step fs-${k + 1}`}>
             <span className="flow-n">{k + 1}</span>
             <span className="flow-t">{s}</span>
             <span className="flow-d">

@@ -1,12 +1,13 @@
 "use client";
 import React from "react";
-import { CartesianGrid, Line, LineChart, ReferenceArea, ReferenceDot, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, CartesianGrid, ComposedChart, Line, LineChart, ReferenceArea, ReferenceDot, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useStore } from "@/lib/store";
 import { NOW_HOUR, cumShare } from "@/lib/data";
 import { baselineHour, campaignSnapshot, evaluateCampaign, isOpen } from "@/lib/engine";
 import { fmtDelta, fmtInt, fmtMoney, fmtValue } from "@/lib/format";
 import { RuleResult } from "@/lib/types";
-import { Card, HealthPill, Icon, PageHeader, SevPill } from "./ui";
+import { CampAvatar, Card, HealthPill, Icon, PageHeader, SevPill } from "./ui";
+import { useChartColors } from "./theme";
 import { useNav } from "./Shell";
 import { campaignHealth } from "./helpers";
 
@@ -36,7 +37,7 @@ export function CampaignList() {
               const h = campaignHealth(state, c);
               return (
                 <tr key={c.id} className="click" onClick={() => go({ view: "campaigns", campaignId: c.id })}>
-                  <td className="cell-main">{c.name}</td>
+                  <td><div className="cell-camp"><CampAvatar id={c.id} name={c.name} /><span className="cell-main">{c.name}</span></div></td>
                   <td>{c.objective}</td>
                   <td><HealthPill health={h} /></td>
                   <td className="r num">{fmtMoney(c.dailyBudget)}</td>
@@ -55,8 +56,6 @@ export function CampaignList() {
 }
 
 const INJ_NAME: Record<string, string> = { delivery: "Delivery drop", overspend: "Overspend", ctr: "CTR drop", cpa: "CPA spike", zero_conv: "Zero conversions", data_outage: "Data feed outage" };
-const AX = { fontSize: 11, fill: "#6B7280" };
-const TT = { contentStyle: { fontSize: 12, borderRadius: 6, border: "1px solid #E5E7EB", boxShadow: "0 2px 8px rgba(0,0,0,.06)" } };
 
 function ChartCard({ title, note, children }: { title: string; note?: string; children: React.ReactElement }) {
   return (
@@ -89,6 +88,9 @@ export function CampaignDetail({ id }: { id: string }) {
   const { state } = useStore();
   const { go, openSim } = useNav();
   const c = state.campaigns.find((x) => x.id === id)!;
+  const cc = useChartColors();
+  const AX = { fontSize: 11, fill: cc.axis };
+  const TT = { contentStyle: { fontSize: 12, borderRadius: 6, border: `1px solid ${cc.tipBorder}`, background: cc.tipBg, color: cc.tipText, boxShadow: "0 2px 8px rgba(0,0,0,.12)" }, labelStyle: { color: cc.tipText } };
   const snap = campaignSnapshot(c, state.rules);
   const results = evaluateCampaign(c, state.rules);
   const health = campaignHealth(state, c);
@@ -129,7 +131,7 @@ export function CampaignDetail({ id }: { id: string }) {
     <>
       <button className="back" onClick={() => go({ view: "campaigns" })}><Icon name="back" size={14} />Campaigns</button>
       <PageHeader
-        title={<>{c.name} <HealthPill health={health} /></>}
+        title={<><CampAvatar id={c.id} name={c.name} size={30} />{c.name} <HealthPill health={health} /></>}
         sub={
           <>
             {c.objective} · Budget {fmtMoney(c.dailyBudget)}/day{c.targetCPA ? ` · Target CPA ${fmtMoney(c.targetCPA)}` : ""} · Baseline: {snap.base.basis}
@@ -164,47 +166,47 @@ export function CampaignDetail({ id }: { id: string }) {
       <Legend />
       <div className="grid-2">
         <ChartCard title="Impressions by hour" note={`Delivery rule: last ${state.rules.delivery.windowHours} completed hours`}>
-          <LineChart data={hourly} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-            <CartesianGrid stroke="#F1F3F5" vertical={false} />
-            <XAxis dataKey="h" tick={AX} interval={3} tickLine={false} axisLine={{ stroke: "#E5E7EB" }} />
+          <ComposedChart data={hourly} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+            <CartesianGrid stroke={cc.grid} vertical={false} />
+            <XAxis dataKey="h" tick={AX} interval={3} tickLine={false} axisLine={{ stroke: cc.grid }} />
             <YAxis tick={AX} tickLine={false} axisLine={false} width={48} tickFormatter={(v) => (v >= 1000 ? `${Math.round(v / 1000)}k` : v)} />
             <Tooltip {...TT} />
-            {delivery.status === "triggered" && <ReferenceArea x1={hourly[NOW_HOUR - 2].h} x2={hourly[NOW_HOUR - 1].h} fill="#C8423B" fillOpacity={0.08} />}
-            <Line dataKey="baseline" name="Baseline" stroke="#9CA3AF" strokeDasharray="4 4" dot={false} strokeWidth={1.5} isAnimationActive={false} />
-            <Line dataKey="today" name="Today" stroke="#14213D" dot={false} strokeWidth={2} connectNulls={false} isAnimationActive={false} />
-          </LineChart>
+            {delivery.status === "triggered" && <ReferenceArea x1={hourly[NOW_HOUR - 2].h} x2={hourly[NOW_HOUR - 1].h} fill={cc.red} fillOpacity={0.1} />}
+            <Line dataKey="baseline" name="Baseline" stroke={cc.base} strokeDasharray="4 4" dot={false} strokeWidth={1.5} isAnimationActive={false} />
+            <Area dataKey="today" name="Today" stroke={cc.line} fill={cc.fill} fillOpacity={0.12} strokeWidth={2} connectNulls={false} isAnimationActive={false} />
+          </ComposedChart>
         </ChartCard>
         <ChartCard title="Cumulative spend vs planned pace" note={`Budget ${fmtMoney(c.dailyBudget)}`}>
-          <LineChart data={pacing} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-            <CartesianGrid stroke="#F1F3F5" vertical={false} />
-            <XAxis dataKey="h" tick={AX} interval={3} tickLine={false} axisLine={{ stroke: "#E5E7EB" }} />
+          <ComposedChart data={pacing} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+            <CartesianGrid stroke={cc.grid} vertical={false} />
+            <XAxis dataKey="h" tick={AX} interval={3} tickLine={false} axisLine={{ stroke: cc.grid }} />
             <YAxis tick={AX} tickLine={false} axisLine={false} width={48} tickFormatter={(v) => `$${v >= 1000 ? (v / 1000).toFixed(1) + "k" : v}`} />
             <Tooltip {...TT} formatter={(v: number) => fmtMoney(v)} />
-            <Line dataKey="plan" name="Planned" stroke="#9CA3AF" strokeDasharray="4 4" dot={false} strokeWidth={1.5} isAnimationActive={false} />
-            <Line dataKey="actual" name="Actual" stroke="#14213D" dot={false} strokeWidth={2} isAnimationActive={false} />
-          </LineChart>
+            <Line dataKey="plan" name="Planned" stroke={cc.base} strokeDasharray="4 4" dot={false} strokeWidth={1.5} isAnimationActive={false} />
+            <Area dataKey="actual" name="Actual" stroke={cc.line} fill={cc.fill} fillOpacity={0.12} strokeWidth={2} isAnimationActive={false} />
+          </ComposedChart>
         </ChartCard>
         <ChartCard title="CTR, daily" note={`Baseline ${baseCtr.toFixed(2)}%`}>
           <LineChart data={ctrTrend} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-            <CartesianGrid stroke="#F1F3F5" vertical={false} />
-            <XAxis dataKey="d" tick={AX} interval={Math.max(0, Math.floor(ctrTrend.length / 6))} tickLine={false} axisLine={{ stroke: "#E5E7EB" }} />
+            <CartesianGrid stroke={cc.grid} vertical={false} />
+            <XAxis dataKey="d" tick={AX} interval={Math.max(0, Math.floor(ctrTrend.length / 6))} tickLine={false} axisLine={{ stroke: cc.grid }} />
             <YAxis tick={AX} tickLine={false} axisLine={false} width={48} domain={["auto", "auto"]} tickFormatter={(v) => `${v}%`} />
             <Tooltip {...TT} formatter={(v: number) => `${v}%`} />
-            <ReferenceLine y={+baseCtr.toFixed(2)} stroke="#9CA3AF" strokeDasharray="4 4" />
-            <Line dataKey="v" name="CTR" stroke="#14213D" strokeWidth={2} dot={false} isAnimationActive={false} />
-            {!stale && <ReferenceDot x="Today" y={+snap.ctr.toFixed(2)} r={4} fill={ctrR.status === "triggered" && ctrR.severity !== "info" ? "#C8423B" : "#14213D"} stroke="#fff" />}
+            <ReferenceLine y={+baseCtr.toFixed(2)} stroke={cc.base} strokeDasharray="4 4" />
+            <Line dataKey="v" name="CTR" stroke={cc.line} strokeWidth={2} dot={false} isAnimationActive={false} />
+            {!stale && <ReferenceDot x="Today" y={+snap.ctr.toFixed(2)} r={4} fill={ctrR.status === "triggered" && ctrR.severity !== "info" ? cc.red : cc.line} stroke={cc.tipBg} />}
           </LineChart>
         </ChartCard>
         {c.tracking ? (
           <ChartCard title="CPA, daily" note={`Baseline ${fmtMoney(baseCpa, 2)}`}>
             <LineChart data={cpaTrend} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-              <CartesianGrid stroke="#F1F3F5" vertical={false} />
-              <XAxis dataKey="d" tick={AX} interval={Math.max(0, Math.floor(cpaTrend.length / 6))} tickLine={false} axisLine={{ stroke: "#E5E7EB" }} />
+              <CartesianGrid stroke={cc.grid} vertical={false} />
+              <XAxis dataKey="d" tick={AX} interval={Math.max(0, Math.floor(cpaTrend.length / 6))} tickLine={false} axisLine={{ stroke: cc.grid }} />
               <YAxis tick={AX} tickLine={false} axisLine={false} width={48} domain={["auto", "auto"]} tickFormatter={(v) => `$${v}`} />
               <Tooltip {...TT} formatter={(v: number) => fmtMoney(v, 2)} />
-              <ReferenceLine y={+baseCpa.toFixed(2)} stroke="#9CA3AF" strokeDasharray="4 4" />
-              <Line dataKey="v" name="CPA" stroke="#14213D" strokeWidth={2} dot={false} isAnimationActive={false} />
-              {!stale && snap.cpa != null && <ReferenceDot x="Today" y={+snap.cpa.toFixed(2)} r={4} fill={cpaR.status === "triggered" && cpaR.severity !== "info" ? "#C8423B" : "#14213D"} stroke="#fff" />}
+              <ReferenceLine y={+baseCpa.toFixed(2)} stroke={cc.base} strokeDasharray="4 4" />
+              <Line dataKey="v" name="CPA" stroke={cc.line} strokeWidth={2} dot={false} isAnimationActive={false} />
+              {!stale && snap.cpa != null && <ReferenceDot x="Today" y={+snap.cpa.toFixed(2)} r={4} fill={cpaR.status === "triggered" && cpaR.severity !== "info" ? cc.red : cc.line} stroke={cc.tipBg} />}
             </LineChart>
           </ChartCard>
         ) : (

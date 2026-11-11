@@ -19,6 +19,12 @@ const P: Record<string, React.ReactNode> = {
   reset: <><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /></>,
   repeat: <><path d="m17 2 4 4-4 4" /><path d="M3 11v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4" /><path d="M21 13v1a4 4 0 0 1-4 4H3" /></>,
   ext: <><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /></>,
+  sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>,
+  moon: <><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" /></>,
+  eye: <><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></>,
+  dollar: <><path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></>,
+  clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
+  shield: <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></>,
 };
 
 export function Icon({ name, size = 16, className = "" }: { name: keyof typeof P | string; size?: number; className?: string }) {
@@ -74,4 +80,14 @@ export function Delta({ d, goodWhenUp = false }: { d?: number; goodWhenUp?: bool
   const up = d > 0;
   const bad = goodWhenUp ? !up : up;
   return <span className={`delta ${bad ? "bad" : "good"}`}>{up ? "▲" : "▼"} {Math.abs(Math.round(d))}%</span>;
+}
+
+const CAMP_COLORS: Record<string, string> = { c1: "teal", c2: "violet", c3: "amber", c4: "rose", c5: "blue", c6: "green" };
+export function CampAvatar({ id, name, size = 26 }: { id: string; name: string; size?: number }) {
+  const initials = name.split(" ").slice(0, 2).map((w) => w[0]).join("");
+  return <span className={`camp-av av-${CAMP_COLORS[id] ?? "teal"}`} style={{ width: size, height: size }}>{initials}</span>;
+}
+
+export function IconChip({ name, tone }: { name: string; tone: "red" | "amber" | "blue" | "teal" | "green" | "violet" }) {
+  return <span className={`ichip ic-${tone}`}><Icon name={name} size={15} /></span>;
 }
