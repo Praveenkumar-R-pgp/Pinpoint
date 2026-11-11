@@ -71,7 +71,7 @@ export default function Shell() {
             <div className="acct">
               <div className="avatar">P</div>
               <div>
-                <div className="acct-n">Priya Menon</div>
+                <div className="acct-n">Priya</div>
                 <div className="acct-s">BrewCraft Coffee · D2C</div>
               </div>
             </div>

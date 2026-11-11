@@ -48,7 +48,7 @@ export default function Notifications() {
               <div className="email-subj">{n.subject}</div>
               <div className="email-meta">
                 <div><span className="muted">From</span> Pinpoint Alerts &lt;alerts@pinpoint.example&gt;</div>
-                <div><span className="muted">To</span> Priya Menon &lt;priya@brewcraft.example&gt;</div>
+                <div><span className="muted">To</span> Priya &lt;priya@brewcraft.example&gt;</div>
                 <div><span className="muted">Sent</span> {fmtDateTime(n.at, now)}</div>
               </div>
               <span className="sim-badge">Simulated email, not sent</span>
